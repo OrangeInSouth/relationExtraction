@@ -16,14 +16,15 @@ import sys
 import re
 from pyltp import Segmentor, Postagger, Parser, NamedEntityRecognizer
 
-print("正在加载LTP模型... ...")
-
+print
+"正在加载LTP模型... ..."
 
 segmentor = Segmentor()
 
 p = os.path.join(MODELDIR, "cws.model")
 segmentor.load(p)
-print(p)
+print
+p
 
 postagger = Postagger()
 postagger.load(os.path.join(MODELDIR, "pos.model"))
@@ -37,8 +38,8 @@ recognizer.load(os.path.join(MODELDIR, "ner.model"))
 # labeller = SementicRoleLabeller()
 # labeller.load(os.path.join(MODELDIR, "srl/"))
 
-print("加载模型完毕。")
-
+print
+"加载模型完毕。"
 
 in_file_name = "./input.txt"
 # in_file_name = "./origin/category1财经.txt"
@@ -76,11 +77,11 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
     """
     in_file = open(in_file_name, 'r')
     out_file = open(out_file_name, 'w')
-    total = 0   # 抽取出三元组数目
-    type1 = 0   # 主谓宾数目
-    type2 = 0   # 定语后置数目
-    type3 = 0   # 介宾主谓动补数目
-    type4 = 0   # ATT数目
+    total = 0
+    type1 = 0
+    type2 = 0
+    type3 = 0
+    type4 = 0
     line_index = 1
     sentence_number = 0
     text_line = in_file.readline()
@@ -108,49 +109,49 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
             pass
         sentence_number += 1
         if sentence_number % 50 == 0:
-            print("%d done" % (sentence_number))
-
+            print
+            "%d done" % (sentence_number)
         text_line = in_file.readline()
         line_index += 1
     in_file.close()
     out_file.close()
 
-    print("总共有" + str(line_index - 1) + "句")
-
+    print
+    "总共有" + str(line_index - 1) + "句"
     return total, type1, type2, type3, type4
 
 
 def fact_triple_extract(sentence, out_file):
-    total = 0   # 抽取出三元组数目
-    type1 = 0   # 主谓宾数目
-    type2 = 0   # 定语后置数目
-    type3 = 0   # 介宾主谓动补数目
-    type4 = 0   # ATT数目
+    total = 0
+    type1 = 0
+    type2 = 0
+    type3 = 0
+    type4 = 0
     """
     对于给定的句子进行事实三元组抽取
     Args:
         sentence: 要处理的语句
     """
     # print sentence
-    words = segmentor.segment(sentence)     # 分词
-    print("word is ")
-
+    words = segmentor.segment(sentence)
+    print
+    "word is "
     wordsStr = "\t".join(words)
-    print(wordsStr)
-
-    postags = postagger.postag(words)       # 命名实体识别
+    print
+    wordsStr
+    postags = postagger.postag(words)
     netags = recognizer.recognize(words, postags)
-    print("netags is ")
-
+    print
+    "netags is "
     netagsStr = "\t".join(netags)
-    print(netagsStr)
-
-    arcs = parser.parse(words, postags)     # 依存句法分析：arc.head 表示依存弧的父节点词的索引，arc.relation 表示依存弧的关系。
-    print("arc.head:arc.relation is ")
-
+    print
+    netagsStr
+    arcs = parser.parse(words, postags)
+    print
+    "arc.head:arc.relation is "
     arcsStr = "\t".join("%d:%s" % (arc.head, arc.relation) for arc in arcs)
-    print(arcsStr)
-
+    print
+    arcsStr
 
     NE_list = set()
     for i in range(len(netags)):
@@ -171,18 +172,18 @@ def fact_triple_extract(sentence, out_file):
     # 至此名词全部收集在NE_list
     child_dict_list = build_parse_child_dict(words, postags, arcs)
 
-    print("postags is")     # 词性标注
-
+    print
+    "postags is"
     postagsStr = "\t".join(postags)
-    print(postagsStr)
-
+    print
+    postagsStr
 
     for index in range(len(postags)):
         # 抽取以谓词为中心的事实三元组
         if postags[index] == 'v':
             child_dict = child_dict_list[index]
             # 主谓宾
-            if 'SBV' in child_dict and 'VOB' in child_dict:
+            if child_dict.has_key('SBV') and child_dict.has_key('VOB'):
                 e1 = complete_e(words, postags, child_dict_list, child_dict['SBV'][0])
                 r = words[index]
                 e2 = complete_e(words, postags, child_dict_list, child_dict['VOB'][0])
@@ -195,7 +196,7 @@ def fact_triple_extract(sentence, out_file):
                     total += 1
             # 定语后置，动宾关系
             if arcs[index].relation == 'ATT':
-                if 'VOB' in child_dict:
+                if child_dict.has_key('VOB'):
                     e1 = complete_e(words, postags, child_dict_list, arcs[index].head - 1)
                     r = words[index]
                     e2 = complete_e(words, postags, child_dict_list, child_dict['VOB'][0])
@@ -209,16 +210,15 @@ def fact_triple_extract(sentence, out_file):
                         type2 += 1
                         total += 1
             # 含有介宾关系的主谓动补关系
-            if 'SBV' in child_dict and 'CMP' in child_dict:
+            if child_dict.has_key('SBV') and child_dict.has_key('CMP'):
                 # e1 = words[child_dict['SBV'][0]]
                 e1 = complete_e(words, postags, child_dict_list, child_dict['SBV'][0])
                 cmp_index = child_dict['CMP'][0]
                 r = words[index] + words[cmp_index]
-                if 'POB' in child_dict_list[cmp_index]:
+                if child_dict_list[cmp_index].has_key('POB'):
                     e2 = complete_e(words, postags, child_dict_list, child_dict_list[cmp_index]['POB'][0])
                     # if e1 in NE_list or e2 in NE_list:
                     if is_good(e1, NE_list, sentence) and is_good(e2, NE_list, sentence):
-                        out_file.write('cctest')
                         out_file.write("介宾关系主谓动补\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0))
                         out_file.flush()
                         type3 += 1
@@ -273,7 +273,7 @@ def build_parse_child_dict(words, postags, arcs):
         child_dict = dict()
         for arc_index in range(len(arcs)):
             if arcs[arc_index].head == index + 1:
-                if arcs[arc_index].relation in child_dict:
+                if child_dict.has_key(arcs[arc_index].relation):
                     child_dict[arcs[arc_index].relation].append(arc_index)
                 else:
                     child_dict[arcs[arc_index].relation] = []
@@ -292,7 +292,7 @@ def complete_e(words, postags, child_dict_list, word_index):
     # 台湾 属于 中国 word_index对应台湾与中国
     child_dict = child_dict_list[word_index]
     prefix = ''
-    if 'ATT' in child_dict:
+    if child_dict.has_key('ATT'):
         for i in range(len(child_dict['ATT'])):
             prefix += complete_e(words, postags, child_dict_list, child_dict['ATT'][i])
 
@@ -365,4 +365,3 @@ if __name__ == "__main__":
     print("定语后置" + str(t2))
     print("介宾主谓动补" + str(t3))
     print("ATT" + str(t4))
-
