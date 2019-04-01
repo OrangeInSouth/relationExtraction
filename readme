@@ -3,3 +3,7 @@
 3.运行环境python2
 4.模型文件已上传:https://pan.baidu.com/s/1w7rag1-izR74at7Zj1UfWQ  密码:9j2e
 
+第二部分工作：
+将src导入到eclipse新建项目中，运行目录下的com.scir.hypernym.webservice.dealResult.java
+
+将该java代码与第一部分工作合并为一个文件
