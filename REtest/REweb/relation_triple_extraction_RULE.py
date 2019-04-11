@@ -74,13 +74,14 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
         begin_line: 读文件的起始行
         end_line: 读文件的结束行
     """
-    in_file = open(in_file_name, 'r',encoding='utf-8')
-    out_file = open(out_file_name, 'w',encoding='utf-8')
+    in_file = open(in_file_name, 'r')
+    out_file = open(out_file_name, 'w')
     total = 0
     type1 = 0
     type2 = 0
     type3 = 0
     type4 = 0
+    result=[]
     line_index = 1
     sentence_number = 0
     text_line = in_file.readline()
@@ -97,7 +98,8 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
             line_index += 1
             continue
         try:
-            flag, t1, t2, t3, t4 = fact_triple_extract(sentence, out_file)
+            flag, t1, t2, t3, t4 ,result_sentence= fact_triple_extract(sentence, out_file)
+            result.append(result_sentence)
             total += flag
             type1 += t1
             type2 += t2
@@ -117,7 +119,7 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
 
     print("总共有" + str(line_index - 1) + "句")
 
-    return total, type1, type2, type3, type4
+    return total, type1, type2, type3, type4, result
 
 
 def fact_triple_extract(sentence, out_file):
@@ -126,6 +128,7 @@ def fact_triple_extract(sentence, out_file):
     type2 = 0
     type3 = 0
     type4 = 0
+    out_string=''
     """
     对于给定的句子进行事实三元组抽取
     Args:
@@ -189,7 +192,8 @@ def fact_triple_extract(sentence, out_file):
                 e2 = complete_e(words, postags, child_dict_list, child_dict['VOB'][0])
                 # if e1 in NE_list or e2 in NE_list:
                 if is_good(e1, NE_list, sentence) and is_good(e2, NE_list, sentence):
-                    out_file.write("主语谓语宾语关系\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0))
+                    out_string="主语谓语宾语关系\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0)
+                    out_file.write(out_string)
                     out_file.flush()
 
                     type1 += 1
@@ -206,7 +210,8 @@ def fact_triple_extract(sentence, out_file):
                         e1 = e1[len(temp_string):]
                     # if temp_string not in e1 and (e1 in NE_list or e2 in NE_list):
                     if temp_string not in e1 and is_good(e1, NE_list, sentence) and is_good(e2, NE_list, sentence):
-                        out_file.write("定语后置动宾关系\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0))
+                        out_string="定语后置动宾关系\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0)
+                        out_file.write(out_string)
                         out_file.flush()
                         type2 += 1
                         total += 1
@@ -222,7 +227,8 @@ def fact_triple_extract(sentence, out_file):
                     e2 = complete_e(words, postags, child_dict_list, child_dict_list[cmp_index]['POB'][0])
                     # if e1 in NE_list or e2 in NE_list:
                     if is_good(e1, NE_list, sentence) and is_good(e2, NE_list, sentence):
-                        out_file.write("介宾关系主谓动补\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0))
+                        out_string="介宾关系主谓动补\t(%s, %s, %s)\t%s\t%s\n" % (e1, r, e2, sentence, 0)
+                        out_file.write(out_string)
                         out_file.flush()
                         type3 += 1
                         total += 1
@@ -256,11 +262,12 @@ def fact_triple_extract(sentence, out_file):
                     if r in e2:
                         e2 = e2[(e2.index(r) + len(r)):]
                     if is_good(e1, NE_list, sentence) and is_good(e2, NE_list, sentence):
-                        out_file.write("(人名/地名/机构,职务/关系,命名实体)\t(%s,%s,%s)\t%s\t%s\n" % (e1, r, e2, sentence, 1))
+                        out_string="(人名/地名/机构,职务/关系,命名实体)\t(%s,%s,%s)\t%s\t%s\n" % (e1, r, e2, sentence, 1)
+                        out_file.write(out_string)
                         out_file.flush()
                         type4 += 1
                         total += 1
-    return total, type1, type2, type3, type4
+    return total, type1, type2, type3, type4, out_string
 
 
 def build_parse_child_dict(words, postags, arcs):
@@ -337,7 +344,7 @@ def is_good(e, NE_list, sentence):
 
 
 def handleInput():
-    file = open("./REweb/input.txt", 'r',encoding='utf-8')
+    file = open("./REweb/input.txt", 'r')
     try:
         fileStr = file.readlines()
         file.close()
@@ -364,13 +371,13 @@ def handleInput():
 
 def main():
     handleInput()
-    a, t1, t2, t3, t4 = extraction_start(inaf_file_name, out_file_name, begin_line, end_line)
+    a, t1, t2, t3, t4, result= extraction_start(inaf_file_name, out_file_name, begin_line, end_line)
     print("抽取出了" + str(a) + "个三元组")
     print("主谓宾" + str(t1))
     print("定语后置" + str(t2))
     print("介宾主谓动补" + str(t3))
     print("ATT" + str(t4))
-
+    return result
 
 if __name__ == "__main__":
     main()
