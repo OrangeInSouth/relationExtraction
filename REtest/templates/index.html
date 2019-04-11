@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>三元组抽取</title>
+    </head>
+    <body>
+
+    <form action="/index/" method="post">
+        {% csrf_token %}
+
+        <P>
+            <label>待提取三元组的句子：</label>
+            <input type="text" name='sentence' size="65"/>
+        </P>
+        <p><input type="submit" value="提取"/></p>
+    </form>
+    </body>
+    {% for s in sen %}
+        <br>{{s}}<br/>
+    {%endfor%}
+</html>
