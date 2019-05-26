@@ -25,5 +25,6 @@ from REweb import views  # 导入views模块
 from django.conf.urls import url
 
 urlpatterns = [
-    url(r'', views.index)  # 配置当访问''时去调用views下的index方法，也可是index/等
+#    url(r'index/', views.index)  # 配置当访问index/时去调用views下的index方法
+    url(r'',views.index)
 ]

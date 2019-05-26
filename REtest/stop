@@ -1,0 +1,9 @@
+pid=`lsof -i:2345 | grep "python3" | awk '{print $2}'`
+
+if [ "$pid" = "" ]; then
+        echo No running services.
+else
+        echo kill $pid
+        kill $pid
+fi
+

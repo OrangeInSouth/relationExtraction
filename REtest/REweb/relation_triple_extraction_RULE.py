@@ -1,20 +1,14 @@
-#!/usr/bin/env python
-# coding=utf-8
-"""
-文本中事实三元组抽取
-python *.py input.txt output.txt corpus.txt begin_line end_line
-"""
-
 __author__ = "tianwen jiang"
-
-# Set your own model path
-MODELDIR = "./REweb/ltp-data-v3.3.1/ltp_data/"
 
 import traceback
 import os
 import sys
 import re
 from pyltp import Segmentor, Postagger, Parser, NamedEntityRecognizer
+
+root_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+# Set your own model path
+MODELDIR = "/home/liuyongjie/work/pycharm/graduate/data/ltp_data_v3.4.0/"
 
 print("正在加载LTP模型... ...")
 
@@ -39,10 +33,9 @@ recognizer.load(os.path.join(MODELDIR, "ner.model"))
 
 print("加载模型完毕。")
 
-
 in_file_name = "./REweb/input.txt"
 # in_file_name = "./origin/category1财经.txt"
-inaf_file_name = "./REweb/inputaf.txt"
+inaf_file_name ="./REweb/inputaf.txt"
 out_file_name = "./REweb/output_jiang.txt"
 out_score_file_name = "./REweb/output_score_jiang.txt"
 
@@ -65,7 +58,14 @@ if len(sys.argv) > 5:
     end_line = int(sys.argv[5])
 
 
-def extraction_start(in_file_name, out_file_name, begin_line, end_line):
+def extraction_start(input_sens,in_file_name, out_file_name, begin_line, end_line):
+    # input_sens中每一个元素就是in_file_name中的一行内容，用x=pop(0)代替file.readline()
+    a=''.join(input_sens).split('\n')
+    input_sens=[]
+    for x in a:
+        if x!=a[-1]:    x+='\n'
+        input_sens.append(x)
+
     """
     事实三元组抽取的总控程序
     Args:
@@ -84,22 +84,26 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
     result=[]
     line_index = 1
     sentence_number = 0
-    text_line = in_file.readline()
+    # text_line = in_file.readline()
+    text_line=input_sens.pop(0)
     while text_line:
         if line_index < begin_line:
-            text_line = in_file.readline()
+            # text_line = in_file.readline()
+            text_line=input_sens.pop(0)
             line_index += 1
             continue
         if end_line != 0 and line_index > end_line:
             break
         sentence = text_line.strip()
         if sentence == "" or len(sentence) > 1000:
-            text_line = in_file.readline()
+            # text_line = in_file.readline()
+            text_line=input_sens.pop(0)
             line_index += 1
             continue
         try:
             flag, t1, t2, t3, t4 ,result_sentence= fact_triple_extract(sentence, out_file)
-            result.append(result_sentence)
+            if result_sentence!='':
+                result.append(result_sentence)
             total += flag
             type1 += t1
             type2 += t2
@@ -111,14 +115,15 @@ def extraction_start(in_file_name, out_file_name, begin_line, end_line):
         sentence_number += 1
         if sentence_number % 50 == 0:
             print("%d done" % (sentence_number))
-
-        text_line = in_file.readline()
+        # text_line = in_file.readline()
+        if input_sens:
+            text_line = input_sens.pop(0)
+        else:
+            text_line = None
         line_index += 1
     in_file.close()
     out_file.close()
-
     print("总共有" + str(line_index - 1) + "句")
-
     return total, type1, type2, type3, type4, result
 
 
@@ -134,7 +139,6 @@ def fact_triple_extract(sentence, out_file):
     Args:
         sentence: 要处理的语句
     """
-    # print sentence
     words = segmentor.segment(sentence)
     print("word is ")
 
@@ -153,7 +157,6 @@ def fact_triple_extract(sentence, out_file):
 
     arcsStr = "\t".join("%d:%s" % (arc.head, arc.relation) for arc in arcs)
     print(arcsStr)
-
 
     NE_list = set()
     for i in range(len(netags)):
@@ -179,13 +182,11 @@ def fact_triple_extract(sentence, out_file):
     postagsStr = "\t".join(postags)
     print(postagsStr)
 
-
     for index in range(len(postags)):
         # 抽取以谓词为中心的事实三元组
         if postags[index] == 'v':
             child_dict = child_dict_list[index]
             # 主谓宾
-            # if child_dict.has_key('SBV') and child_dict.has_key('VOB'):  `            try!!!!!!!!!!!
             if 'SBV' in child_dict and 'VOB' in child_dict:
                 e1 = complete_e(words, postags, child_dict_list, child_dict['SBV'][0])
                 r = words[index]
@@ -200,7 +201,6 @@ def fact_triple_extract(sentence, out_file):
                     total += 1
             # 定语后置，动宾关系
             if arcs[index].relation == 'ATT':
-                # if child_dict.has_key('VOB'):    try!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if 'VOB' in child_dict:
                     e1 = complete_e(words, postags, child_dict_list, arcs[index].head - 1)
                     r = words[index]
@@ -216,13 +216,11 @@ def fact_triple_extract(sentence, out_file):
                         type2 += 1
                         total += 1
             # 含有介宾关系的主谓动补关系
-            # if child_dict.has_key('SBV') and child_dict.has_key('CMP'):   try!!!!!!!!!!!!!!!!!!!!!!!!!!
             if 'SBV' in child_dict and 'CMP' in child_dict:
                 # e1 = words[child_dict['SBV'][0]]
                 e1 = complete_e(words, postags, child_dict_list, child_dict['SBV'][0])
                 cmp_index = child_dict['CMP'][0]
                 r = words[index] + words[cmp_index]
-                # if child_dict_list[cmp_index].has_key('POB'):   try!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if 'POB' in child_dict_list[cmp_index]:
                     e2 = complete_e(words, postags, child_dict_list, child_dict_list[cmp_index]['POB'][0])
                     # if e1 in NE_list or e2 in NE_list:
@@ -283,7 +281,6 @@ def build_parse_child_dict(words, postags, arcs):
         child_dict = dict()
         for arc_index in range(len(arcs)):
             if arcs[arc_index].head == index + 1:
-                # if child_dict.has_key(arcs[arc_index].relation):          try!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if arcs[arc_index].relation in child_dict:
                     child_dict[arcs[arc_index].relation].append(arc_index)
                 else:
@@ -303,7 +300,6 @@ def complete_e(words, postags, child_dict_list, word_index):
     # 台湾 属于 中国 word_index对应台湾与中国
     child_dict = child_dict_list[word_index]
     prefix = ''
-    # if child_dict.has_key('ATT'):           # try!!!!!!!!!!!!!!!!!
     if 'ATT' in child_dict:
         for i in range(len(child_dict['ATT'])):
             prefix += complete_e(words, postags, child_dict_list, child_dict['ATT'][i])
@@ -343,35 +339,29 @@ def is_good(e, NE_list, sentence):
     return False
 
 
-def handleInput():
-    file = open("./REweb/input.txt", 'r')
-    try:
-        fileStr = file.readlines()
-        file.close()
-
-        out = open(inaf_file_name, 'w')
-
-        for x in fileStr:
-            x = x.replace('，', '\n').replace(',', '\n')
-            x = x.replace('。', '\n').replace('.', '\n')
-            x = x.replace('\t', '')
-            x = x.replace('[', '')
-            x = x.replace(']', '')
-            x = x.replace(';', '')
-            x = x.replace('；', '')
-            x = x.replace('　', '').replace(' ', '')
-            x = re.sub(r'\n+', "\n", x)
-
-            if x != '\n':
-                out.write(x)
-
-    except:
-        traceback.print_exc()
+def handleInput(sentence):
+    sen_list=sentence.split('\n')
+    post_sen_list=[]
+    for x in sen_list:
+        if x != sen_list[-1]:
+            x=x+'\n'
+        x = x.replace('，', '\n').replace(',', '\n')
+        x = x.replace('。', '\n').replace('.', '\n')
+        x = x.replace('\t', '')
+        x = x.replace('[', '')
+        x = x.replace(']', '')
+        x = x.replace(';', '')
+        x = x.replace('；', '')
+        x = x.replace('　', '').replace(' ', '')
+        x = re.sub(r'\n+', "\n", x)
+        if x != '\n':
+            post_sen_list.append(x)
+    return post_sen_list
 
 
-def main():
-    handleInput()
-    a, t1, t2, t3, t4, result= extraction_start(inaf_file_name, out_file_name, begin_line, end_line)
+def main(sentence):
+    input_sen=handleInput(sentence)
+    a, t1, t2, t3, t4, result= extraction_start(input_sen,inaf_file_name, out_file_name, begin_line, end_line)
     print("抽取出了" + str(a) + "个三元组")
     print("主谓宾" + str(t1))
     print("定语后置" + str(t2))
@@ -379,7 +369,9 @@ def main():
     print("ATT" + str(t4))
     return result
 
+
 if __name__ == "__main__":
-    main()
+    main('國家主席胡锦涛')
+
 
 
