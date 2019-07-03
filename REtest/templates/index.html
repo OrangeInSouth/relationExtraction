@@ -1,22 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>三元组抽取</title>
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title></title>
+    <link href="/static/css/mycss.css" rel="stylesheet" type="text/css" media="all"/>
+</head>
+<body>
+<div id="app">
+    <div>
+        <div class="el-row">
+            <div class="el-col el-col-12 el-col-offset-6">
+                <form class="el-form" action="getTriple" method="post">
+                    {% csrf_token %}
+                    <div class="el-form-item"><!---->
+                        <div class="el-form-item__content">
+                            <div>输入文本</div>
+                            <div class="el-textarea">
+                                {#                                <input type="text" name="sentence" class="el-textarea__inner"#}
+                                {#                                       style="min-height: 33px; height: 117px;"#}
+                                {#                                       value="德国人再次展现了他们在世界杯上打好开局的能力，4-0战胜葡萄牙后，德国球迷也是一片欢腾。作为德国国家队最大牌的球迷之一——德国女总理默克尔自然不会错过这样的盛宴。“默大妈”不仅现场督战，更在赛后造访了更衣室。">#}
+                                {% if  origin_sentence == '' %}
 
-    <form action="/index/" method="post">
-        {% csrf_token %}
+                                    <textarea name="sentence" autocomplete="off" class="el-textarea__inner"
+                                              style="min-height: 33px; height: 117px;">6月20日，中共中央总书记、国家主席习近平乘专机抵达平壤，开始对朝鲜民主主义人民共和国进行国事访问。当地时间12时许，习近平乘坐的专机抵达平壤顺安机场。雨后初晴的平壤，天高云淡、气候怡人，到处郁郁葱葱、繁花似锦，整个城市洋溢着友好热烈的气氛。机场上中朝两国国旗迎风飘扬，“热烈欢迎中国共产党中央委员会总书记、中华人民共和国主席习近平同志”“鲜血凝成的朝中两国人民之间牢不可破的友谊团结万岁”大幅标语高高悬挂，近万名群众排列成整齐的队伍，有力地挥动着花束，以欢快的口号和热情的笑容，欢迎尊贵的中国客人到来。朝鲜劳动党委员长、国务委员会委员长金正恩和夫人李雪主到机场迎接。</textarea>
+                                {% endif %}
+                                {% if  origin_sentence %}
 
-        <P>
-            <label>待提取三元组的句子：</label>
-            <input type="text" name='sentence' size="65"/>
-        </P>
-        <p><input type="submit" value="提取"/></p>
-    </form>
-    </body>
-    {% for s in sen %}
-        <br>{{s}}<br/>
-    {%endfor%}
+                                    <textarea name="sentence" autocomplete="off" class="el-textarea__inner"
+                                              style="min-height: 33px; height: 117px;">{{ origin_sentence }}</textarea>
+                                {% endif %}
+
+
+                            </div><!----></div>
+                    </div>
+                    <div class="el-form-item"><!---->
+                        <div class="el-form-item__content">
+                            <div class="el-select"><!---->
+                                <div class="el-input el-input--suffix">
+                                    <ul class="dropdown" tabindex="1">
+                                        <!-- 用于取消多次快速点击dp-select 后选中“请选择标签” 的文字 -->
+                                        <div class="dp-select el-scrollbar__view el-select-dropdown__list"
+                                             unselectable="on" onselectstart="return false;"
+                                             style="-moz-user-select:none;">
+                                            <span>示例一</span>
+                                            <div class="dp-img">
+                                                <img src="static/images/down.png" width="15" height="20">
+                                            </div>
+                                        </div>
+
+                                        <li class="dp-list hide" onclick="example1();"><span>示例一</span></li>
+                                        <li class="dp-list hide" onclick="example2();"><span>示例二</span></li>
+                                        <li class="dp-list hide" onclick="example3();"><span>示例三</span></li>
+                                        <li class="dp-list hide" onclick="example4();"><span>示例四</span></li>
+                                    </ul>
+
+                                </div>
+                            </div><!---->
+                        </div>
+                    </div>
+                    <div class="el-form-item"><!---->
+                        <div class="el-form-item__content">
+                            <div class="el-row" style="margin-left: -5px; margin-right: -5px;">
+                                <div class="el-col el-col-24" style="padding-left: 5px; padding-right: 5px;">
+                                    {#                                    <button type="button" class=""><!---->#}
+                                    {#                                        <!----><span>提取</span></button>#}
+                                    <input type="submit" class="el-button bg el-button--primary" value="提取">
+                                </div>
+                            </div><!----></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {#        <div class="el-row">#}
+        {#            <div class="el-col el-col-12 el-col-offset-6">#}
+        {#                <div>领域实体</div>#}
+        {#                <div data-v-3257e5da="" class="line"></div>#}
+        {#            </div>#}
+        {#        </div>#}
+        <div class="el-row">
+            <div class="el-col el-col-12 el-col-offset-6">
+                <div>输出文本</div>
+                <div data-v-3257e5da="" class="line">
+                    {% for r in results %}
+                        {% if r|first == '0' %}
+                            <span
+                                    data-v-3257e5da=""
+                                    title="无关项"
+                                    class="F4">{{ r|last }}</span>
+
+                        {% endif %}
+                        {% if r|first == '1' %}
+                            <span
+                                    data-v-f43c23b4="" data-v-3257e5da=""
+                                    title="头实体"
+                                    class="F1">{{ r|last }}</span>
+
+                        {% endif %}
+                        {% if r|first == '2' %}
+                            <span
+                                    data-v-f43c23b4="" data-v-3257e5da=""
+                                    title="关系词"
+                                    class="F2">{{ r|last }}</span>
+
+                        {% endif %}
+                        {% if r|first == '3' %}
+                            <span
+                                    data-v-f43c23b4="" data-v-3257e5da=""
+                                    title="尾实体"
+                                    class="F3">{{ r|last }}</span>
+
+                        {% endif %}
+                    {% endfor %}
+
+                    {#                    <span#}
+                    {#                            data-v-f43c23b4="" data-v-3257e5da=""#}
+                    {#                            title="无关项"#}
+                    {#                            class="F4">德国人再次展现了他们在世界杯上打好开局的能力，4-0战胜葡萄牙后，德国球迷也是一片欢腾。作为德国国家队最大牌的球迷之一——</span>#}
+                    {##}
+                    {#                    <span data-v-f43c23b4="" data-v-3257e5da="" title="头实体" class="F1">德国</span><span#}
+                    {#                        data-v-f43c23b4="" data-v-3257e5da="" title="关系词" class="F2">女总理</span><span#}
+                    {#                        data-v-f43c23b4="" data-v-3257e5da="" title="尾实体" class="F3">默克尔</span>#}
+                    {#                    <span#}
+                    {#                            data-v-f43c23b4="" data-v-3257e5da=""#}
+                    {#                            title="无关项"#}
+                    {#                            class="F4">自然不会错过这样的盛宴。“默大妈”不仅现场督战，更在赛后造访了更衣室。</span>#}
+
+
+                </div>
+                <div>抽取结果</div>
+                <div data-v-3257e5da="" class="line">
+
+
+                    {% for r in results %}
+
+                        {% if r|first == '1' %}
+                            <span
+                                    data-v-f43c23b4="" data-v-3257e5da=""
+                                    title="头实体"
+                                    class="F1">{{ r|last }}</span>
+
+                        {% endif %}
+                        {% if r|first == '2' %}
+                            <span
+                                    data-v-f43c23b4="" data-v-3257e5da=""
+                                    title="关系词"
+                                    class="F2">{{ r|last }}</span>
+
+                        {% endif %}
+                        {% if r|first == '3' %}
+                            <span
+                                    data-v-f43c23b4="" data-v-3257e5da=""
+                                    title="尾实体"
+                                    class="F3">{{ r|last }}</span>
+                            <br>
+                        {% endif %}
+
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+        {#        <div class="el-row">#}
+        {#            <div class="el-col el-col-12 el-col-offset-6">#}
+        {#                <div>实体分类</div>#}
+        {#                <div data-v-3257e5da="" class="line"></div>#}
+        {#            </div>#}
+        {#        </div>#}
+    </div>
+</div>
+
+</body>
 </html>
+
+<script type="text/javascript" src="static/js/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $('.dropdown .dp-select').on('click', function () {
+        if ($('.dropdown li').hasClass('hide')) {
+            //点击后更改图标
+            $('.dp-img img').attr('src', 'static/images/up.png');
+            //显示li标签
+            $('.dropdown li').removeClass('hide');
+            //加点点击样式
+            {#$('.dropdown').css('border', '1px solid lightblue');#}
+            {#$('.dropdown .dp-img').css('border-left', '1px solid lightblue');#}
+        } else {
+            //点击后更改图标
+            $('.dp-img img').attr('src', 'static/images/down.png');
+            //显示li标签
+            $('.dropdown li').addClass('hide');
+            //继续点击样式
+            {#$('.dropdown').css('border', '1px solid #8a8a8a');#}
+            {#$('.dropdown .dp-img').css('border-left', '1px solid #8a8a8a');#}
+
+
+        }
+
+
+    });
+
+    $('.dropdown').blur(function () {
+        //点击后更改图标
+        $('.dp-img img').attr('src', 'static/images/down.png');
+        //显示li标签
+        $('.dropdown li').addClass('hide');
+        //继续点击样式
+        {#$('.dropdown').css('border', '1px solid #8a8a8a');#}
+        {#$('.dropdown .dp-img').css('border-left', '1px solid #8a8a8a');#}
+    });
+
+    $('.dropdown li').on('click', function () {
+        var text = $(this).text();
+        console.log(text);
+        $('.dp-select span').text(text);
+        //点击后更改图标
+        $('.dp-img img').attr('src', 'static/images/down.png');
+        //显示li标签
+        $('.dropdown li').addClass('hide');
+        //继续点击样式
+        {#$('.dropdown').css('border', '1px solid #8a8a8a');#}
+        {#$('.dropdown .dp-img').css('border-left', '1px solid #8a8a8a');#}
+
+    });
+
+
+    {#document.querySelector('h2 > label').innerHTML =#}
+
+    function example1() {
+
+        document.querySelector('textarea').innerHTML = '6月20日，中共中央总书记、国家主席习近平乘专机抵达平壤，开始对朝鲜民主主义人民共和国进行国事访问。当地时间12时许，习近平乘坐的专机抵达平壤顺安机场。雨后初晴的平壤，天高云淡、气候怡人，到处郁郁葱葱、繁花似锦，整个城市洋溢着友好热烈的气氛。机场上中朝两国国旗迎风飘扬，“热烈欢迎中国共产党中央委员会总书记、中华人民共和国主席习近平同志”“鲜血凝成的朝中两国人民之间牢不可破的友谊团结万岁”大幅标语高高悬挂，近万名群众排列成整齐的队伍，有力地挥动着花束，以欢快的口号和热情的笑容，欢迎尊贵的中国客人到来。朝鲜劳动党委员长、国务委员会委员长金正恩和夫人李雪主到机场迎接。'
+    }
+
+
+    function example2() {
+        document.querySelector('textarea').innerHTML = '青海高原地处青藏高原东北部，是中国最著名的三大江河——黄河、长江和澜沧江的发源地。这里的高山大川间河流密布，湖泊与沼泽众多，是国内海拔最高、湿地面积最大、分布最为集中的地区之一。'
+    }
+
+
+    function example3() {
+        document.querySelector('textarea').innerHTML = '香港资深导演蒋家骏执导的话题轻喜剧《爱情回来了》即将于7月21日登陆安徽、黑龙江、陕西、广东四大卫视黄金档, 该剧汇集了戚薇、陈赫、王传君等年轻偶像，“古装萌主”毛晓彤此番倾力加盟，饰演“明珠女”傲娇小公主包念念，与王传君饰演的兽医方思齐上演了一段另类爱情喜剧“思念恋”, 　　《爱情回来了》讲述了当下年轻男女，在面对婚姻这道门槛时的犹豫彷徨, 其中，毛晓彤也是首度出演青春偶像轻喜剧, 在刚热播的电视剧《刀客家族的女人》中，毛晓彤饰演了新女性明月，将一个能骑擅射，坚韧忠贞，蕴含大能量大智慧的小女子形象塑造的令人过目难忘，眼下，她华丽转身，将带着全新作品《爱情回来了》与观众见面，最新的轻喜剧形象也着实挑战观众眼球, 新剧中，她饰演千金大小姐包念念，和王传君饰演的兽医方思齐上演的“思念恋”虽然并不排斥结婚，但对婚姻生活却充满“迷茫”，两人一个跟着感觉走，一个不知道是自己真想结还是为结婚而结婚, 家室优越的包念念被方思齐身上的呆萌所吸引，上演了倒追模式，结果不小心意外怀孕，惨遭双方父母逼婚, 可怎料领证当日包念念不慎流产，没有了这个结婚的理由，她与方思齐的爱情岌岌可危，但思齐却想出了一个“新婚姻关系”来挽留念念, 然而，这种“新婚姻关系”将如何实施，这对迷茫男女将如何面对接下来的爱情，都成为观众关注的焦点, 对于首次接触轻喜剧，毛晓彤表示其实也算发现了潜藏在自己内心的“幽默”因子，在片场和大家相处的都很愉快，也希望大家多多关注这部力作'
+    }
+
+
+    function example4() {
+        document.querySelector('textarea').innerHTML = '德国人再次展现了他们在世界杯上打好开局的能力，4-0战胜葡萄牙后，德国球迷也是一片欢腾。作为德国国家队最大牌的球迷之一——德国女总理默克尔自然不会错过这样的盛宴。“默大妈”不仅现场督战，更在赛后造访了更衣室。'
+    }
+</script>
